@@ -1,6 +1,6 @@
-package IO;
+package acopso.io;
 
-import Graph.*;
+import acopso.common.graph.*;
 
 import java.io.InputStream;
 
@@ -23,7 +23,8 @@ public class Import {
 
         String[] lines = read(dataSetName).split("\n");
         String[] words = lines[3].split(" ");
-        int numOfCities = Integer.parseInt(words[words.length-1]);
+        System.out.println(words[1]);
+        int numOfCities = Integer.parseInt(words[1].trim());
 
         Vertex[] vertices = new Vertex[numOfCities];
 
@@ -82,7 +83,7 @@ public class Import {
      * @return          a String with the contents of the file
      */
     private static String read (String fileName) {
-        InputStream stream = Import.class.getResourceAsStream(fileName);
+        InputStream stream = Import.class.getClassLoader().getResourceAsStream(fileName);
         java.util.Scanner s = new java.util.Scanner(stream).useDelimiter("\\A");
         return s.hasNext() ? s.next() : "";
     }

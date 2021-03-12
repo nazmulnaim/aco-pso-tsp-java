@@ -1,4 +1,4 @@
-package Graph;
+package acopso.common.graph;
 
 /**
  * This abstract class is the parent of both Vertex and Edge.

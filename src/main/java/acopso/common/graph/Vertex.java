@@ -1,4 +1,4 @@
-package Graph;
+package acopso.common.graph;
 
 import java.util.ArrayList;
 import java.util.HashMap;

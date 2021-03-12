@@ -1,4 +1,6 @@
-import Ants.TravelingSalesman;
+package acopso;
+
+import acopso.aco.TravelingSalesman;
 
 import java.util.Scanner;
 

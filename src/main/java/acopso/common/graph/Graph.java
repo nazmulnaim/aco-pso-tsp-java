@@ -1,6 +1,6 @@
-package Graph;
+package acopso.common.graph;
 
-import Ants.Ant;
+import acopso.aco.Ant;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,7 +1,7 @@
-package Ants;
+package acopso.aco;
 
-import Display.*;
-import Graph.*;
+import acopso.common.graph.*;
+import acopso.io.*;
 
 /**
  * Solves the Traveling Salesman Problem using vanilla Ant Colony Optimization.
@@ -22,19 +22,18 @@ public class TravelingSalesman {
     public TravelingSalesman (int ants, int generations, double evaporation, int alpha, int beta) {
         this.numOfAnts = ants;
         this.generations = generations;
-        graph = IO.Import.getGraph(evaporation, alpha, beta);
+        graph = Import.getGraph(evaporation, alpha, beta);
     }
 
     /**
      * Run the algorithm.
      */
     public void run () {
-        WindowTSP windowTSP = new WindowTSP(graph.getVertices());
 
         Ant bestAnt = null;
         int bestEval = 0;
 
-        delay(1000); // Allow WindowTSP to load.
+        delay(1000);
 
         for (int i = 0; i < generations; i++) {
             Ant[] ants = createAnts(numOfAnts);
@@ -48,8 +47,6 @@ public class TravelingSalesman {
                 bestAnt = ant;
                 bestEval = ant.eval();
             }
-
-            windowTSP.draw(bestAnt.getTour());
         }
 
         System.out.print("Best Tour: ");
