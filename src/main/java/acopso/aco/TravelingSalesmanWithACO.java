@@ -1,25 +1,25 @@
 package acopso.aco;
 
-import acopso.common.graph.*;
-import acopso.io.*;
+import acopso.aco.graph.*;
+import acopso.aco.io.*;
 
 /**
  * Solves the Traveling Salesman Problem using vanilla Ant Colony Optimization.
  */
-public class TravelingSalesman {
+public class TravelingSalesmanWithACO {
 
     private Graph graph;
     private int numOfAnts, generations;
 
     /**
-     * Construct TravelingSalesman.
+     * Construct TravelingSalesman For ACO.
      * @param ants          the number of ants to run per generation
      * @param generations   the number of generations to run
      * @param evaporation   the rate of evaporation
      * @param alpha         the impact of pheromones on decision making
      * @param beta          the impact of distance in decision making
      */
-    public TravelingSalesman (int ants, int generations, double evaporation, int alpha, int beta) {
+    public TravelingSalesmanWithACO (int ants, int generations, double evaporation, int alpha, int beta) {
         this.numOfAnts = ants;
         this.generations = generations;
         graph = Import.getGraph(evaporation, alpha, beta);
@@ -30,14 +30,14 @@ public class TravelingSalesman {
      */
     public void run () {
 
-        Ant bestAnt = null;
+        ACO bestAnt = null;
         int bestEval = 0;
 
         delay(1000);
 
         for (int i = 0; i < generations; i++) {
-            Ant[] ants = createAnts(numOfAnts);
-            Ant ant = travel(ants);
+            ACO[] ants = createAnts(numOfAnts);
+            ACO ant = travel(ants);
             updatePheromones(ants);
 
             if (bestAnt == null) {
@@ -59,10 +59,10 @@ public class TravelingSalesman {
      * @param quantity  the quantity of ants to create
      * @return          an array of the ants created
      */
-    private Ant[] createAnts (int quantity) {
-        Ant[] ants = new Ant[quantity];
+    private ACO[] createAnts (int quantity) {
+        ACO[] ants = new ACO[quantity];
         for (int i = 0; i < quantity; i++) {
-            ants[i] = new Ant(graph);
+            ants[i] = new ACO(graph);
         }
         return ants;
     }
@@ -72,12 +72,12 @@ public class TravelingSalesman {
      * @param ants      the ants to allow to travel
      * @return          the ant with the best evaluation
      */
-    private Ant travel (Ant[] ants) {
+    private ACO travel (ACO[] ants) {
 
-        Ant bestAnt = null;
+        ACO bestAnt = null;
         int bestEval = 0;
 
-        for (Ant ant : ants) {
+        for (ACO ant : ants) {
             while (ant.notFinished()) {
                 ant.travel();
             }
@@ -99,8 +99,8 @@ public class TravelingSalesman {
      * completed tours.
      * @param ants  the ants that will be used to update the pheromones
      */
-    private void updatePheromones (Ant[] ants) {
-        for (Ant ant : ants) {
+    private void updatePheromones (ACO[] ants) {
+        for (ACO ant : ants) {
             graph.updatePheromone(ant);
         }
     }

@@ -1,6 +1,6 @@
 package acopso.aco;
 
-import acopso.common.graph.*;
+import acopso.aco.graph.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -10,7 +10,7 @@ import java.util.Random;
 /**
  * Represents an Ant from the Ant Colony Optimization algorithm.
  */
-public class Ant {
+public class ACO {
 
     private Graph graph;
     private Node current;
@@ -21,7 +21,7 @@ public class Ant {
      * Construct the Ant.
      * @param graph     the graph that the ant will traverse
      */
-    public Ant (Graph graph) {
+    public ACO (Graph graph) {
         this.graph = graph;
         clear();
     }

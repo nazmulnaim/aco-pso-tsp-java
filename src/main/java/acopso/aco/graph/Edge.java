@@ -1,4 +1,4 @@
-package acopso.common.graph;
+package acopso.aco.graph;
 
 /**
  * A representation of a Graph Edge.

@@ -1,6 +1,6 @@
-package acopso.common.graph;
+package acopso.aco.graph;
 
-import acopso.aco.Ant;
+import acopso.aco.ACO;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -115,7 +115,7 @@ public class Graph implements Iterable<Vertex> {
         return nodes;
     }
 
-    public void updatePheromone(Ant ant) {
+    public void updatePheromone(ACO ant) {
 
         double eval = ant.eval();
 
