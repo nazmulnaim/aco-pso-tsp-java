@@ -1,10 +1,10 @@
 package acopso.pso.model;
 
-public class SwarmPosition {
+public class SwarmSwapPosition {
   private int x;
   private int y;
 
-  public SwarmPosition(int x, int y) {
+  public SwarmSwapPosition(int x, int y) {
       this.x = x;
       this.y = y;
   }

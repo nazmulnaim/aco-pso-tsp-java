@@ -21,8 +21,6 @@ public class Import {
         startingLine = Integer.parseInt(Utils.getReportConfigurationValue("starting.line"));
 
         String[] lines = Utils.read(dataSetName).split("\n");
-        /* String[] words = lines[3].split(" ");
-        int numOfCities = Integer.parseInt(words[1].trim()); */
 
         int numOfCities = Integer.parseInt(Utils.getReportConfigurationValue("number.of.cities"));
 

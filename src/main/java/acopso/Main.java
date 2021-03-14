@@ -2,6 +2,7 @@ package acopso;
 
 import acopso.aco.TravelingSalesmanWithACO;
 import acopso.common.Utils;
+import acopso.pso.TravelingSalesmanWithPSO;
 
 import java.util.Scanner;
 
@@ -72,7 +73,10 @@ public class Main {
             int numberOfSwarm = 100; // Number of Swarm to run per generation.
             int generation = 100; // Number of Iteration.
             double weight = 0.5; // Weight Factor.
-            int start = 1; // Starting Point.
+            int start = 0; // Starting Point.
+
+            TravelingSalesmanWithPSO tsp = new TravelingSalesmanWithPSO(numberOfSwarm, generation, weight, start);
+            tsp.run();
 
         }
         System.out.println("-------------------------COMPLETE--------------------------");
@@ -88,6 +92,8 @@ public class Main {
         weight = getUserDouble("Weight Factor:          ");
         start = getUserInt("Starting Point:         ");
 
+        TravelingSalesmanWithPSO tsp = new TravelingSalesmanWithPSO(numberOfSwarm, generation, weight, start);
+        tsp.run();
     }
 
     private static double getUserDouble(String msg) {

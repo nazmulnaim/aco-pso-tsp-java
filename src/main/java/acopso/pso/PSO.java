@@ -1,28 +1,21 @@
 package acopso.pso;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
+import acopso.common.Utils;
+import acopso.pso.io.Import;
 import acopso.pso.model.MapMatrix;
-import acopso.pso.model.SwarmPosition;
+import acopso.pso.model.SwarmSwapPosition;
 
 public class PSO {
 
     private int bestNumber;
 
-    private float globalWeight;
+    private double globalWeight;
 
     private int generation; // iteration time
 
@@ -38,10 +31,9 @@ public class PSO {
 
     private MapMatrix<Integer, Integer, Integer> numOfParticles; // particle swarm
 
-    private ArrayList<ArrayList<SwarmPosition>> swaplistOfEachParticle; // swap list of each particle
+    private List<List<SwarmSwapPosition>> swaplistOfEachParticle; // swap list of each particle
 
-    private MapMatrix<Integer, Integer, Integer> bestSolutionOfEachParticle; // best solution of each
-                                                                             // particle among all generations
+    private MapMatrix<Integer, Integer, Integer> bestSolutionOfEachParticle; // best solution of each particle among all generations
 
     private Map<Integer, Integer> evaluationOfBestSolution; // evaluation value of best solution
 
@@ -55,27 +47,17 @@ public class PSO {
 
     private Random random;
 
-    ExecutorService executorService = Executors.newFixedThreadPool(50);
-
-    public PSO(int cityNum, int g, int s, float globalWeight, int b) {
-        this.numberOfCities = cityNum;
-        this.generation = g;
-        this.numberOfSwarm = s;
+    public PSO(int numberOfSwarm, int generation, double globalWeight, int start) {
+        this.numberOfSwarm = numberOfSwarm;
+        this.generation = generation;
         this.globalWeight = globalWeight;
-        this.start = b;
+        this.start = start;
+        this.numberOfCities = Integer.parseInt(Utils.getReportConfigurationValue("number.of.cities"));
+        init();
     }
 
-    public void init(String filename) throws IOException {
-        int[] x;
-        int[] y;
-        String strbuff;
-        InputStream is = getClass().getClassLoader().getResourceAsStream(filename);
-        BufferedReader data = new BufferedReader(new InputStreamReader(is));
+    public void init() {
         distanceMatrix = new MapMatrix<>();
-        x = new int[numberOfCities];
-        y = new int[numberOfCities];
-
-        distanceMatrix.set(numberOfCities - 1, numberOfCities - 1, 0);
 
         numOfParticles = new MapMatrix<>();
         fitness = new HashMap<>();
@@ -93,28 +75,7 @@ public class PSO {
 
         random = new Random(System.currentTimeMillis());
 
-        for (int i = 0; i < numberOfCities; i++) {
-            strbuff = data.readLine();
-            String[] strcol = strbuff.split(" ");
-            x[i] = Integer.valueOf(strcol[1]);// x
-            y[i] = Integer.valueOf(strcol[2]);// y
-        }
-
-        // calculate distance between points
-        for (int i = 0; i < numberOfCities - 1; i++) {
-            distanceMatrix.set(i, i, 0);
-            for (int j = i + 1; j < numberOfCities; j++) {
-                double rij = Math.sqrt(((x[i] - x[j]) * (x[i] - x[j]) + (y[i] - y[j]) * (y[i] - y[j])) / 10.0);
-                int tij = (int) Math.round(rij);
-                if (tij < rij) {
-                    distanceMatrix.set(i, j, tij + 1);
-                    distanceMatrix.set(j, i, distanceMatrix.get(i, j));
-                } else {
-                    distanceMatrix.set(i, j, tij);
-                    distanceMatrix.set(j, i, distanceMatrix.get(i, j));
-                }
-            }
-        }
+        distanceMatrix = Import.getMapMatrix();
     }
 
     void initGroupParticleSwarm() {
@@ -151,10 +112,10 @@ public class PSO {
         int ra1;
         int ra2;
 
-        swaplistOfEachParticle = new ArrayList<ArrayList<SwarmPosition>>();
+        swaplistOfEachParticle = new ArrayList<>();
 
         for (int i = 0; i < numberOfSwarm; i++) {
-            ArrayList<SwarmPosition> list = new ArrayList<SwarmPosition>();
+            List<SwarmSwapPosition> list = new ArrayList<>();
             ra = random.nextInt(65535) % numberOfCities;
             for (int j = 0; j < ra; j++) {
                 ra1 = random.nextInt(65535) % numberOfCities;
@@ -166,7 +127,7 @@ public class PSO {
                     ra2 = random.nextInt(65535) % numberOfCities;
                 }
 
-                SwarmPosition S = new SwarmPosition(ra1, ra2);
+                SwarmSwapPosition S = new SwarmSwapPosition(ra1, ra2);
                 list.add(S);
             }
 
@@ -176,7 +137,6 @@ public class PSO {
 
     public int evaluateLength(Map<Integer, Integer> chr) {
         int len = 0;
-        // point 1, 2, 3...
         for (int i = 1; i < numberOfCities; i++) {
             len += distanceMatrix.get(chr.get(i - 1), chr.get(i));
         }
@@ -184,9 +144,9 @@ public class PSO {
         return len;
     }
 
-    public void add(Map<Integer, Integer> arr, ArrayList<SwarmPosition> list) {
+    public void add(Map<Integer, Integer> arr, List<SwarmSwapPosition> list) {
         int temp = 0;
-        SwarmPosition S;
+        SwarmSwapPosition S;
         for (int i = 0; i < list.size(); i++) {
             S = list.get(i);
             temp = arr.get(S.getX());
@@ -196,14 +156,14 @@ public class PSO {
     }
 
     // get swapping list from b to a
-    public ArrayList<SwarmPosition> minus(Map<Integer, Integer> a, Map<Integer, Integer> b) {
+    public List<SwarmSwapPosition> minus(Map<Integer, Integer> a, Map<Integer, Integer> b) {
         Map<Integer, Integer> temp = new HashMap<>();
         temp.putAll(b);
         int index;
         // swapping unit
-        SwarmPosition S;
+        SwarmSwapPosition S;
         // swapping list
-        ArrayList<SwarmPosition> list = new ArrayList<SwarmPosition>();
+        List<SwarmSwapPosition> list = new ArrayList<SwarmSwapPosition>();
         for (int i = 0; i < numberOfCities; i++) {
             if (a.get(i) != temp.get(i)) {
                 // find the same index as a[i] in temp[]
@@ -211,7 +171,7 @@ public class PSO {
                 // change i and index in temp[]
                 changeIndex(temp, i, index);
                 // record swapping unit
-                S = new SwarmPosition(i, index);
+                S = new SwarmSwapPosition(i, index);
                 // save swapping unit
                 list.add(S);
             }
@@ -253,12 +213,12 @@ public class PSO {
     }
 
     private void particle(int i) {
-        ArrayList<SwarmPosition> Vi;
+        List<SwarmSwapPosition> Vi;
         int len;
         int j;
         float ra;
         float rb;
-        ArrayList<SwarmPosition> Vii = new ArrayList<SwarmPosition>();
+        List<SwarmSwapPosition> Vii = new ArrayList<>();
 
         // refresh velocity
         // Vii=wVi+ra(Pid-Xid)+rb(Pgd-Xid)
@@ -272,7 +232,7 @@ public class PSO {
         }
 
         // Pid-Xid
-        ArrayList<SwarmPosition> a = minus(bestSolutionOfEachParticle.get(i), numOfParticles.get(i));
+        List<SwarmSwapPosition> a = minus(bestSolutionOfEachParticle.get(i), numOfParticles.get(i));
         ra = random.nextFloat();
 
         // ra(Pid-Xid)
@@ -283,14 +243,14 @@ public class PSO {
         }
 
         // Pgd-Xid
-        ArrayList<SwarmPosition> b = minus(globalBestSolution, numOfParticles.get(i));
+        List<SwarmSwapPosition> b = minus(globalBestSolution, numOfParticles.get(i));
         rb = random.nextFloat();
 
         // rb(Pgd-Xid)
         len = (int) (b.size() * rb);
 
         for (j = 0; j < len; j++) {
-            SwarmPosition tt = b.get(j);
+            SwarmSwapPosition tt = b.get(j);
             Vii.add(tt);
         }
 
@@ -307,34 +267,14 @@ public class PSO {
         int len = 0;
         float ra = 0f;
 
-        ArrayList<SwarmPosition> Vi;
+        ArrayList<SwarmSwapPosition> Vi;
 
         for (currentGeneration = 0; currentGeneration < generation; currentGeneration++) {
-            // create concurrent threads to record particles' movement
-            ArrayList<Callable<Void>> runnables = new ArrayList<>();
             for (i = 0; i < numberOfSwarm; i++) {
-                if (i == bestNumber)
+                if (i == bestNumber){
                     continue;
-
-                final int ii = i;
-                runnables.add(new Callable<Void>() {
-                    @Override
-                    public Void call() {
-                        particle(ii);
-                        return null;
-                    }
-                });
-
-            }
-            try {
-                List<Future<Void>> futures = executorService.invokeAll(runnables);
-                for (Future<Void> future : futures) {
-                    future.get();
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
+                particle(i);
             }
 
             // calculate fitness value of new swarm, get best solution
@@ -346,8 +286,7 @@ public class PSO {
                     bestNumber = k;
                 }
                 if (evaluationOfGlobalBestSolution > evaluationOfBestSolution.get(k)) {
-                    System.out.println(
-                            "Shortest distance: " + evaluationOfGlobalBestSolution + " Generation: " + bestGeneration);
+                    //System.out.println("Shortest distance: " + evaluationOfGlobalBestSolution + " Generation: " + bestGeneration);
                     bestGeneration = currentGeneration;
                     evaluationOfGlobalBestSolution = evaluationOfBestSolution.get(k);
                     copyMap(bestSolutionOfEachParticle.get(k), globalBestSolution);
@@ -356,7 +295,7 @@ public class PSO {
         }
     }
 
-    public void run() {
+    public void solve() {
         int i;
         int k;
 
@@ -376,35 +315,40 @@ public class PSO {
             }
         }
 
-        System.out.println("Initial particle swarm...");
+        //System.out.println("Initial particle swarm...");
         for (k = 0; k < numberOfSwarm; k++) {
             for (i = 0; i < numberOfCities; i++) {
-                System.out.print(numOfParticles.get(k, i) + ",");
+                //System.out.print(numOfParticles.get(k, i) + ",");
             }
-            System.out.println();
-            System.out.println("----" + fitness.get(k));
+            //System.out.println();
+            //System.out.println("----" + fitness.get(k));
         }
 
         evolution();
 
-        System.out.println("Final particle swarm...");
+        //System.out.println("Final particle swarm...");
         for (k = 0; k < numberOfSwarm; k++) {
             for (i = 0; i < numberOfCities; i++) {
-                System.out.print(numOfParticles.get(k, i) + ",");
+                //System.out.print(numOfParticles.get(k, i) + ",");
             }
-            System.out.println();
-            System.out.println("----" + fitness.get(k));
+            //System.out.println();
+            //System.out.println("----" + fitness.get(k));
         }
 
-        System.out.println("Best generation: ");
-        System.out.println(bestGeneration);
-        System.out.println("Shortest distance: ");
-        System.out.println(evaluationOfGlobalBestSolution);
-        System.out.println("Best path: ");
+        //System.out.print("Best generation: ");
+        //System.out.println(bestGeneration);
+        System.out.print("Best Tour: ");
         for (i = 0; i < numberOfCities; i++) {
-            System.out.print(globalBestSolution.get(i) + ",");
+            if(i==0){
+                System.out.print(globalBestSolution.get(i));
+            }else{
+                System.out.print(" -> " + globalBestSolution.get(i));
+            }
         }
-
+        System.out.println();
+        System.out.print("Shortest distance: ");
+        System.out.println(evaluationOfGlobalBestSolution);
+        
     }
 
 }

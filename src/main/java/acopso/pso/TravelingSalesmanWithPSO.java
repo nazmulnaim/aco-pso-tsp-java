@@ -4,20 +4,19 @@ import acopso.aco.graph.*;
 import acopso.aco.io.*;
 
 public class TravelingSalesmanWithPSO {
-  private Graph graph;
-  private int numOfParticles, generations;
-
+  PSO pso;
   /**
    * Construct TravelingSalesman For PSO.
    * 
-   * @param swarm       Number of Swarm to run per generation.
+   * @param numberOfSwarm       Number of Swarm to run per generation.
    * @param generations The number of generations to run
-   * @param weight      The Weight Factor
+   * @param globalWeight      The Weight Factor
    * @param start       The Starting Point
    */
-  public TravelingSalesmanWithPSO(int swarm, int generations, double weight, int start) {
-    this.numOfParticles = swarm;
-    this.generations = generations;
-    // graph = Import.getGraph(evaporation);
+  public TravelingSalesmanWithPSO(int numberOfSwarm, int generations, double globalWeight, int start) {
+    pso = new PSO(numberOfSwarm, generations, globalWeight, start);
+  }
+  public void run () {
+    pso.solve();
   }
 }
