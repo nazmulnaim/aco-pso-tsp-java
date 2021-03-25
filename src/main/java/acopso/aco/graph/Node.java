@@ -2,7 +2,6 @@ package acopso.aco.graph;
 
 /**
  * This abstract class is the parent of both Vertex and Edge.
- * <br />
  * Vertices and edges contain similar properties: a name and a coordinate.
  * This abstract class brings those commonalities together to avoid duplicity.
  */
@@ -47,19 +46,6 @@ public abstract class Node {
         return y;
     }
 
-    /**
-     * Change the name of the Node.
-     * This is the only mutable property of Node as it has no effect
-     * on the hashCode or equals methods.
-     * @param name      The new name of the Node
-     */
-    public void setName (String name) {
-        if (name == null)
-            throw new NullPointerException();
-
-        this.name = name;
-    }
-
     @Override
     public boolean equals (Object o) {
         if (this == o) return true;
@@ -85,5 +71,4 @@ public abstract class Node {
                 ", y=" + y +
                 '}';
     }
-
 }

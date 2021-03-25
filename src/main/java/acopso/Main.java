@@ -8,6 +8,7 @@ import java.util.Scanner;
 
 public class Main {
 
+
     public static void main(String[] args) {
         if (Utils.getReportConfigurationValue("optimization.method").contains("aco")) {
             aco(args);
@@ -30,14 +31,21 @@ public class Main {
             System.out.println("Alpha (pheromone impact): 1");
             System.out.println("Beta (distance impact):   5");
 
-            int ants = 100; // Number of ants to run per generation.
-            int gen = 100; // Number of generations.
+            int ants = 15; // Number of ants to run per generation.
+            int gen = 15; // Number of generations.
             double evap = 0.1; // Evaporation rate of pheromones.
             int alpha = 1; // Impact of pheromones on decision making.
             int beta = 5; // Impact of distance on decision making.
-
+            long startTime = System.currentTimeMillis();
             TravelingSalesmanWithACO travelingSalesman = new TravelingSalesmanWithACO(ants, gen, evap, alpha, beta);
             travelingSalesman.run();
+            long stopTime = System.currentTimeMillis();
+            long elapsedTime = stopTime - startTime;
+            System.out.println("Total runtime in milliseconds: "+elapsedTime);
+            Runtime runtime = Runtime.getRuntime();
+            System.gc();
+            long memory = runtime.totalMemory() - runtime.freeMemory();
+            System.out.println("Approximate memory usage is bytes: " + memory);
         }
         System.out.println("-------------------------COMPLETE--------------------------");
     }
@@ -54,8 +62,16 @@ public class Main {
         alpha = getUserInt("Alpha (pheromone impact): ");
         beta = getUserInt("Beta (distance impact):   ");
 
+        long startTime = System.currentTimeMillis();
         tsp = new TravelingSalesmanWithACO(ants, gen, evap, alpha, beta);
         tsp.run();
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Total runtime in milliseconds: "+elapsedTime);
+        Runtime runtime = Runtime.getRuntime();
+        System.gc();
+        long memory = runtime.totalMemory() - runtime.freeMemory();
+        System.out.println("Approximate memory usage is bytes: " + memory);
     }
 
     public static void pso(String[] args) {
@@ -70,14 +86,21 @@ public class Main {
             System.out.println("Weight Factor:          0.5");
             System.out.println("Starting Point:         1");
 
-            int numberOfSwarm = 100; // Number of Swarm to run per generation.
-            int generation = 100; // Number of Iteration.
+            int numberOfSwarm = 15; // Number of Swarm to run per generation.
+            int generation = 15; // Number of Iteration.
             double weight = 0.5; // Weight Factor.
             int start = 0; // Starting Point.
 
+            long startTime = System.currentTimeMillis();
             TravelingSalesmanWithPSO tsp = new TravelingSalesmanWithPSO(numberOfSwarm, generation, weight, start);
             tsp.run();
-
+            long stopTime = System.currentTimeMillis();
+            long elapsedTime = stopTime - startTime;
+            System.out.println("Total runtime in milliseconds: "+elapsedTime);
+            Runtime runtime = Runtime.getRuntime();
+            System.gc();
+            long memory = runtime.totalMemory() - runtime.freeMemory();
+            System.out.println("Approximate memory usage is bytes: " + memory);
         }
         System.out.println("-------------------------COMPLETE--------------------------");
     }
@@ -92,8 +115,16 @@ public class Main {
         weight = getUserDouble("Weight Factor:          ");
         start = getUserInt("Starting Point:         ");
 
+        long startTime = System.currentTimeMillis();
         TravelingSalesmanWithPSO tsp = new TravelingSalesmanWithPSO(numberOfSwarm, generation, weight, start);
         tsp.run();
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Total runtime in milliseconds: "+elapsedTime);
+        Runtime runtime = Runtime.getRuntime();
+        System.gc();
+        long memory = runtime.totalMemory() - runtime.freeMemory();
+        System.out.println("Approximate memory usage is bytes: " + memory);
     }
 
     private static double getUserDouble(String msg) {

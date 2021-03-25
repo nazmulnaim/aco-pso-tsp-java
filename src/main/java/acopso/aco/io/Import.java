@@ -16,17 +16,14 @@ public class Import {
 
         String dataSetName;
         int startingLine;
-
         dataSetName = Utils.getReportConfigurationValue("data.set.name");
         startingLine = Integer.parseInt(Utils.getReportConfigurationValue("starting.line"));
-
         String[] lines = Utils.read(dataSetName).split("\n");
 
         int numOfCities = Integer.parseInt(Utils.getReportConfigurationValue("number.of.cities"));
 
         Vertex[] vertices = new Vertex[numOfCities];
 
-        // Read each line and turn it into a Vertex.
         for (int i = startingLine; i < startingLine+numOfCities; i++) {
             String[] line = Utils.removeWhiteSpace(lines[i]).trim().split(" ");
             int x = (int)Double.parseDouble(line[1].trim());
@@ -37,12 +34,10 @@ public class Import {
 
         Graph graph = new Graph(evaporationRate, alpha, beta);
 
-        // Create the spine of the graph (the vertices).
         for (int i = 0; i < numOfCities; i++) {
             graph.addVertex(vertices[i]);
         }
 
-        // Create the edges of the graph (connect every vertex to each other).
         for (Vertex v : graph) {
             for (int i = 0; i < numOfCities; i++) {
                 if (vertices[i] != v) {
@@ -50,8 +45,6 @@ public class Import {
                 }
             }
         }
-
         return graph;
     }
-
 }

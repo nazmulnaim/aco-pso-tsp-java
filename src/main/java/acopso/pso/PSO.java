@@ -9,46 +9,35 @@ import java.util.Random;
 import acopso.common.Utils;
 import acopso.pso.io.Import;
 import acopso.pso.model.MapMatrix;
-import acopso.pso.model.SwarmSwapPosition;
+import acopso.pso.model.NextPossiblePosition;
 
 public class PSO {
 
-    private int bestNumber;
-
-    private double globalWeight;
-
-    private int generation; // iteration time
-
-    private int numberOfSwarm; // particle num
-
-    private int numberOfCities; // particlepoint num
-
-    private int currentGeneration; // current generation
-
-    private int start; // start point
-
-    private MapMatrix<Integer, Integer, Integer> distanceMatrix; // matrix of distance
-
-    private MapMatrix<Integer, Integer, Integer> numOfParticles; // particle swarm
-
-    private List<List<SwarmSwapPosition>> swaplistOfEachParticle; // swap list of each particle
-
-    private MapMatrix<Integer, Integer, Integer> bestSolutionOfEachParticle; // best solution of each particle among all generations
-
-    private Map<Integer, Integer> evaluationOfBestSolution; // evaluation value of best solution
-
-    private Map<Integer, Integer> globalBestSolution; // global best solution
-
-    private int evaluationOfGlobalBestSolution; // evaluation value of global best solution
-
-    private int bestGeneration; // best generation
-
-    private Map<Integer, Integer> fitness;
-
+    private int bestNumber; // Best fitness value
+    private double globalWeight; // Weight factor for each particle
+    private int generation; // Total iteration time
+    private int numberOfParticles; // Total number of particle
+    private int numberOfCities; // Total number of cities
+    private int currentGeneration; // current iteration number
+    private int start; // Starting city
+    private MapMatrix<Integer, Integer, Integer> distanceMatrix; // Map matrix of distance
+    private MapMatrix<Integer, Integer, Integer> travelingSequenceCitiesOfAllParticles; // All traveling path of the swarm of all particles
+    private List<List<NextPossiblePosition>> possibleTravelingPathOfAllParticles; // List of traveling path each particle
+    private MapMatrix<Integer, Integer, Integer> bestTravelingPathOfAllParticles; // Best traveling path of each particle among all generations
+    private Map<Integer, Integer> evaluationOfBestSolution; // Evaluation value of best traveling path
+    private Map<Integer, Integer> globalBestTravelingPath; // Global best traveling path
+    private int evaluationOfGlobalBestSolution; // Evaluation value of global best traveling path
+    private int bestGeneration; // Generation of the best evaluation
+    private Map<Integer, Integer> fitness; // Best fitness value of each particle
     private Random random;
 
+
+    /**
+     * Represents each particle from the particle swarm Optimization algorithm.
+     */
+
     public PSO(int numberOfSwarm, int generation, double globalWeight, int start) {
-        this.numberOfSwarm = numberOfSwarm;
+        this.numberOfParticles = numberOfSwarm;
         this.generation = generation;
         this.globalWeight = globalWeight;
         this.start = start;
@@ -56,133 +45,140 @@ public class PSO {
         init();
     }
 
+    /**
+     * calculating covered distance for each particle
+     * finding global and individual best
+     */
+
     public void init() {
         distanceMatrix = new MapMatrix<>();
-
-        numOfParticles = new MapMatrix<>();
+        travelingSequenceCitiesOfAllParticles = new MapMatrix<>();
         fitness = new HashMap<>();
 
-        // individual
-        bestSolutionOfEachParticle = new MapMatrix<>();
+        bestTravelingPathOfAllParticles = new MapMatrix<>();
         evaluationOfBestSolution = new HashMap<>();
 
-        // global
-        globalBestSolution = new HashMap<>();
+        globalBestTravelingPath = new HashMap<>();
         evaluationOfGlobalBestSolution = Integer.MAX_VALUE;
 
         bestGeneration = 0;
         currentGeneration = 0;
 
         random = new Random(System.currentTimeMillis());
-
         distanceMatrix = Import.getMapMatrix();
     }
 
-    void initGroupParticleSwarm() {
-        int i, j, k;
-        for (k = 0; k < numberOfSwarm; k++) // swarm num
+    /**
+     * Starting each particles from a point,
+     * select the cities the particles can travel and
+     * check if the particles have covered all the cities
+     */
+
+    void initTravelingCitiesOfParticles() {
+        int currentCity, checkingCity, particle;
+        for (particle = 0; particle < numberOfParticles; particle++)
         {
-            // start point
-            numOfParticles.set(k, 0, start);
-            for (i = 1; i < numberOfCities;) // particle num
+            travelingSequenceCitiesOfAllParticles.set(particle, 0, start);
+            for (currentCity = 1; currentCity < numberOfCities;)
             {
-                numOfParticles.set(k, i, random.nextInt(65535) % numberOfCities);
-                for (j = 0; j < i; j++) {
-                    if (numOfParticles.get(k, i) == numOfParticles.get(k, j) || numOfParticles.get(k, i) == start) {
+                int nextCity = random.nextInt(65535) % numberOfCities;
+                travelingSequenceCitiesOfAllParticles.set(particle, currentCity, nextCity);
+                for (checkingCity = 0; checkingCity < currentCity; checkingCity++) {
+                    if (travelingSequenceCitiesOfAllParticles.get(particle, currentCity) == travelingSequenceCitiesOfAllParticles.get(particle, checkingCity) || travelingSequenceCitiesOfAllParticles.get(particle, currentCity) == start) {
                         break;
                     }
                 }
-                if (j == i) {
-                    i++;
+                if (checkingCity == currentCity) {
+                    currentCity++;
                 }
             }
         }
     }
 
-    public Map<Integer, Integer> getGlobalBestSolution() {
-        return globalBestSolution;
-    }
+    /**
+     * Get the traveling points for each particles and store them in an array.
+     */
 
-    public int getEvaluationOfGlobalBestSolution() {
-        return evaluationOfGlobalBestSolution;
-    }
+    void setinitialTravelingPathEachParticle() {
+        int numberOfCityToBeVisited;
+        int cityA;
+        int cityB;
 
-    void initSwappingListForEachParticle() {
-        int ra;
-        int ra1;
-        int ra2;
+        possibleTravelingPathOfAllParticles = new ArrayList<>();
 
-        swaplistOfEachParticle = new ArrayList<>();
-
-        for (int i = 0; i < numberOfSwarm; i++) {
-            List<SwarmSwapPosition> list = new ArrayList<>();
-            ra = random.nextInt(65535) % numberOfCities;
-            for (int j = 0; j < ra; j++) {
-                ra1 = random.nextInt(65535) % numberOfCities;
-                while (ra1 == 0) {
-                    ra1 = random.nextInt(65535) % numberOfCities;
+        for (int i = 0; i < numberOfParticles; i++) {
+            List<NextPossiblePosition> list = new ArrayList<>();
+            numberOfCityToBeVisited = random.nextInt(65535) % numberOfCities;
+            for (int j = 0; j < numberOfCityToBeVisited; j++) {
+                cityA = random.nextInt(65535) % numberOfCities;
+                while (cityA == 0) {
+                    cityA = random.nextInt(65535) % numberOfCities;
                 }
-                ra2 = random.nextInt(65535) % numberOfCities;
-                while (ra1 == ra2 || ra2 == 0) {
-                    ra2 = random.nextInt(65535) % numberOfCities;
+                cityB = random.nextInt(65535) % numberOfCities;
+                while (cityA == cityB || cityB == 0) {
+                    cityB = random.nextInt(65535) % numberOfCities;
                 }
-
-                SwarmSwapPosition S = new SwarmSwapPosition(ra1, ra2);
-                list.add(S);
+                NextPossiblePosition nextPossiblePosition = new NextPossiblePosition(cityA, cityB);
+                list.add(nextPossiblePosition);
             }
-
-            swaplistOfEachParticle.add(list);
+            possibleTravelingPathOfAllParticles.add(list);
         }
     }
+
+    /**
+     * Get the length of total distance of the swarm
+     */
 
     public int evaluateLength(Map<Integer, Integer> chr) {
-        int len = 0;
+        int length = 0;
         for (int i = 1; i < numberOfCities; i++) {
-            len += distanceMatrix.get(chr.get(i - 1), chr.get(i));
+            length += distanceMatrix.get(chr.get(i - 1), chr.get(i));
         }
-        len += distanceMatrix.get(chr.get(numberOfCities - 1), chr.get(0));
-        return len;
+        length += distanceMatrix.get(chr.get(numberOfCities - 1), chr.get(0));
+        return length;
     }
 
-    public void add(Map<Integer, Integer> arr, List<SwarmSwapPosition> list) {
+    /**
+     * Update traveling path of a particle
+     */
+    public void updateTravelingPath(Map<Integer, Integer> travelingSequenceOfCitiesOfAParticle, List<NextPossiblePosition> updatedTravelingPath) {
         int temp = 0;
-        SwarmSwapPosition S;
-        for (int i = 0; i < list.size(); i++) {
-            S = list.get(i);
-            temp = arr.get(S.getX());
-            arr.put(S.getX(), arr.get(S.getY()));
-            arr.put(S.getY(), temp);
+        NextPossiblePosition S;
+        for (int i = 0; i < updatedTravelingPath.size(); i++) {
+            S = updatedTravelingPath.get(i);
+            temp = travelingSequenceOfCitiesOfAParticle.get(S.getX());
+            travelingSequenceOfCitiesOfAParticle.put(S.getX(), travelingSequenceOfCitiesOfAParticle.get(S.getY()));
+            travelingSequenceOfCitiesOfAParticle.put(S.getY(), temp);
         }
     }
 
-    // get swapping list from b to a
-    public List<SwarmSwapPosition> minus(Map<Integer, Integer> a, Map<Integer, Integer> b) {
+    /**
+     * Update traveling path of a particle to hole the best route with the newly obtained traveling sequence of cities of the same particle
+     */
+    public List<NextPossiblePosition> updateTravelingSequenceOfCities(Map<Integer, Integer> bestTravelingPathOfAParticle, Map<Integer, Integer> travelingSequenceCitiesOfAParticle) {
         Map<Integer, Integer> temp = new HashMap<>();
-        temp.putAll(b);
+        temp.putAll(travelingSequenceCitiesOfAParticle);
         int index;
-        // swapping unit
-        SwarmSwapPosition S;
-        // swapping list
-        List<SwarmSwapPosition> list = new ArrayList<SwarmSwapPosition>();
-        for (int i = 0; i < numberOfCities; i++) {
-            if (a.get(i) != temp.get(i)) {
-                // find the same index as a[i] in temp[]
-                index = findNum(temp, a.get(i));
-                // change i and index in temp[]
-                changeIndex(temp, i, index);
-                // record swapping unit
-                S = new SwarmSwapPosition(i, index);
-                // save swapping unit
-                list.add(S);
+        NextPossiblePosition nextPossiblePosition;
+        List<NextPossiblePosition> fullTravelingPathOfAParticle = new ArrayList<>();
+        for (int city = 0; city < numberOfCities; city++) {
+            if (bestTravelingPathOfAParticle.get(city) != temp.get(city)) {
+                index = findCityPositionInTheTravelingSequence(temp, bestTravelingPathOfAParticle.get(city));
+                changePositionOfTheCityInTheTravelingSequence(temp, city, index);
+                nextPossiblePosition = new NextPossiblePosition(city, index);
+                fullTravelingPathOfAParticle.add(nextPossiblePosition);
             }
         }
-        return list;
+        return fullTravelingPathOfAParticle;
     }
 
-    public int findNum(Map<Integer, Integer> arr, int num) {
+    /**
+     * Find city position in the traveling sequence of the cities of a particle
+     */
+    public int findCityPositionInTheTravelingSequence(Map<Integer, Integer> travelingSequenceCitiesOfAParticle, int city) {
         int index = -1;
         for (int i = 0; i < numberOfCities; i++) {
-            if (arr.get(i) == num) {
+            if (travelingSequenceCitiesOfAParticle.get(i) == city) {
                 index = i;
                 break;
             }
@@ -190,165 +186,139 @@ public class PSO {
         return index;
     }
 
-    public void changeIndex(Map<Integer, Integer> arr, int index1, int index2) {
-        int temp = arr.get(index1);
-        arr.put(index1, arr.get(index2));
-        arr.put(index2, temp);
+    /**
+     * Change position of a city in the traveling sequence of cities a particles 
+     */
+    public void changePositionOfTheCityInTheTravelingSequence(Map<Integer, Integer> travelingSequenceCitiesOfAParticle, int city, int swapingCity) {
+        int temp = travelingSequenceCitiesOfAParticle.get(city);
+        travelingSequenceCitiesOfAParticle.put(city, travelingSequenceCitiesOfAParticle.get(swapingCity));
+        travelingSequenceCitiesOfAParticle.put(swapingCity, temp);
     }
 
-    // 二维数组拷贝
-    public void copyMatrix(MapMatrix<Integer, Integer, Integer> from, MapMatrix<Integer, Integer, Integer> to) {
-        for (int i = 0; i < numberOfSwarm; i++) {
+    /**
+     * Utility method to copy map matrix
+     */
+    public void copyMapMatrix(MapMatrix<Integer, Integer, Integer> from, MapMatrix<Integer, Integer, Integer> to) {
+        for (int i = 0; i < numberOfParticles; i++) {
             for (int j = 0; j < numberOfCities; j++) {
                 to.set(i, j, from.get(i, j));
             }
         }
     }
 
-    // 一维数组拷贝
+    /**
+     * Utility method to copy collection (map)
+     */
     public void copyMap(Map<Integer, Integer> from, Map<Integer, Integer> to) {
         for (int i = 0; i < numberOfCities; i++) {
             to.put(i, from.get(i));
         }
     }
 
-    private void particle(int i) {
-        List<SwarmSwapPosition> Vi;
-        int len;
-        int j;
-        float ra;
-        float rb;
-        List<SwarmSwapPosition> Vii = new ArrayList<>();
+    /**
+     * Calculate total traveling path for a specific particle
+     */
+    private void calculateMovementOfAParticle(int particle) {
+        List<NextPossiblePosition> travelingPath;
+        int length;
+        float randomFactorA;
+        float ramdomFactorB;
+        List<NextPossiblePosition> finalTravelingPath = new ArrayList<>();
 
-        // refresh velocity
-        // Vii=wVi+ra(Pid-Xid)+rb(Pgd-Xid)
-        Vi = swaplistOfEachParticle.get(i);
+        travelingPath = possibleTravelingPathOfAllParticles.get(particle);
 
-        // wVi+表示获取Vi中size*w取整个交换序列
-        len = (int) (Vi.size() * globalWeight);
+        // calculating global weight
+        length = (int) (travelingPath.size() * globalWeight);
 
-        for (j = 0; j < len; j++) {
-            Vii.add(Vi.get(j));
+        for (int j = 0; j < length; j++) {
+            finalTravelingPath.add(travelingPath.get(j));
         }
 
-        // Pid-Xid
-        List<SwarmSwapPosition> a = minus(bestSolutionOfEachParticle.get(i), numOfParticles.get(i));
-        ra = random.nextFloat();
+        List<NextPossiblePosition> a = updateTravelingSequenceOfCities(bestTravelingPathOfAllParticles.get(particle), travelingSequenceCitiesOfAllParticles.get(particle));
+        randomFactorA = random.nextFloat();
 
-        // ra(Pid-Xid)
-        len = (int) (a.size() * ra);
+        length = (int) (a.size() * randomFactorA);
 
-        for (j = 0; j < len; j++) {
-            Vii.add(a.get(j));
+        for (int j = 0; j < length; j++) {
+            finalTravelingPath.add(a.get(j));
         }
 
-        // Pgd-Xid
-        List<SwarmSwapPosition> b = minus(globalBestSolution, numOfParticles.get(i));
-        rb = random.nextFloat();
+        List<NextPossiblePosition> b = updateTravelingSequenceOfCities(globalBestTravelingPath, travelingSequenceCitiesOfAllParticles.get(particle));
+        ramdomFactorB = random.nextFloat();
 
-        // rb(Pgd-Xid)
-        len = (int) (b.size() * rb);
+        length = (int) (b.size() * ramdomFactorB);
 
-        for (j = 0; j < len; j++) {
-            SwarmSwapPosition tt = b.get(j);
-            Vii.add(tt);
+        for (int j = 0; j < length; j++) {
+            NextPossiblePosition tt = b.get(j);
+            finalTravelingPath.add(tt);
         }
 
-        // save new Vii
-        swaplistOfEachParticle.set(i, Vii);
-
-        // refresh position
-        // Xid’=Xid+Vid
-        add(numOfParticles.get(i), Vii);
+        possibleTravelingPathOfAllParticles.set(particle, finalTravelingPath);
+        updateTravelingPath(travelingSequenceCitiesOfAllParticles.get(particle), finalTravelingPath);
     }
 
+
+    /**
+     * Evaluate the map and the particles traveling route to calculate the best route of each 
+     * generation and then pick the best solution
+     */
     public void evolution() {
-        int i, j, k;
-        int len = 0;
-        float ra = 0f;
-
-        ArrayList<SwarmSwapPosition> Vi;
-
         for (currentGeneration = 0; currentGeneration < generation; currentGeneration++) {
-            for (i = 0; i < numberOfSwarm; i++) {
+            for (int i = 0; i < numberOfParticles; i++) {
                 if (i == bestNumber){
                     continue;
                 }
-                particle(i);
+                calculateMovementOfAParticle(i);
             }
 
-            // calculate fitness value of new swarm, get best solution
-            for (k = 0; k < numberOfSwarm; k++) {
-                fitness.put(k, evaluateLength(numOfParticles.get(k)));
+            for (int k = 0; k < numberOfParticles; k++) {
+                fitness.put(k, evaluateLength(travelingSequenceCitiesOfAllParticles.get(k)));
                 if (evaluationOfBestSolution.get(k) > fitness.get(k)) {
                     evaluationOfBestSolution.put(k, fitness.get(k));
-                    copyMap(numOfParticles.get(k), bestSolutionOfEachParticle.get(k));
+                    copyMap(travelingSequenceCitiesOfAllParticles.get(k), bestTravelingPathOfAllParticles.get(k));
                     bestNumber = k;
                 }
                 if (evaluationOfGlobalBestSolution > evaluationOfBestSolution.get(k)) {
-                    //System.out.println("Shortest distance: " + evaluationOfGlobalBestSolution + " Generation: " + bestGeneration);
                     bestGeneration = currentGeneration;
                     evaluationOfGlobalBestSolution = evaluationOfBestSolution.get(k);
-                    copyMap(bestSolutionOfEachParticle.get(k), globalBestSolution);
+                    copyMap(bestTravelingPathOfAllParticles.get(k), globalBestTravelingPath);
                 }
             }
         }
     }
 
+    /**
+     * Run the algorithm.
+     */
     public void solve() {
-        int i;
-        int k;
 
-        initGroupParticleSwarm();
-        initSwappingListForEachParticle();
+        initTravelingCitiesOfParticles();
+        setinitialTravelingPathEachParticle();
 
-        // make each particle remember its own best solution
-        copyMatrix(numOfParticles, bestSolutionOfEachParticle);
+        copyMapMatrix(travelingSequenceCitiesOfAllParticles, bestTravelingPathOfAllParticles);
 
-        for (k = 0; k < numberOfSwarm; k++) {
-            fitness.put(k, evaluateLength(numOfParticles.get(k)));
+        for (int k = 0; k < numberOfParticles; k++) {
+            fitness.put(k, evaluateLength(travelingSequenceCitiesOfAllParticles.get(k)));
             evaluationOfBestSolution.put(k, fitness.get(k));
             if (evaluationOfGlobalBestSolution > evaluationOfBestSolution.get(k)) {
                 evaluationOfGlobalBestSolution = evaluationOfBestSolution.get(k);
-                copyMap(bestSolutionOfEachParticle.get(k), globalBestSolution);
+                copyMap(bestTravelingPathOfAllParticles.get(k), globalBestTravelingPath);
                 bestNumber = k;
             }
         }
 
-        //System.out.println("Initial particle swarm...");
-        for (k = 0; k < numberOfSwarm; k++) {
-            for (i = 0; i < numberOfCities; i++) {
-                //System.out.print(numOfParticles.get(k, i) + ",");
-            }
-            //System.out.println();
-            //System.out.println("----" + fitness.get(k));
-        }
-
         evolution();
 
-        //System.out.println("Final particle swarm...");
-        for (k = 0; k < numberOfSwarm; k++) {
-            for (i = 0; i < numberOfCities; i++) {
-                //System.out.print(numOfParticles.get(k, i) + ",");
-            }
-            //System.out.println();
-            //System.out.println("----" + fitness.get(k));
-        }
-
-        //System.out.print("Best generation: ");
-        //System.out.println(bestGeneration);
         System.out.print("Best Tour: ");
-        for (i = 0; i < numberOfCities; i++) {
+        for (int i = 0; i < numberOfCities; i++) {
             if(i==0){
-                System.out.print(globalBestSolution.get(i));
+                System.out.print(globalBestTravelingPath.get(i));
             }else{
-                System.out.print(" -> " + globalBestSolution.get(i));
+                System.out.print(" -> " + globalBestTravelingPath.get(i));
             }
         }
         System.out.println();
         System.out.print("Shortest distance: ");
         System.out.println(evaluationOfGlobalBestSolution);
-        
     }
-
 }

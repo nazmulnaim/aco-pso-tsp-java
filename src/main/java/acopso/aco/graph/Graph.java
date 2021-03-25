@@ -55,25 +55,6 @@ public class Graph implements Iterable<Vertex> {
     }
 
     /**
-     * Gets the total number of undirected Edges in the Graph.
-     * This number will always be equivalent to the number of Edge
-     * objects in the Graph divided by two, since each Edge object is
-     * technically a directed Edge.
-     * @return          The quantity of undirected Edges.
-     */
-    public int getTotalEdges () {
-        return totalEdges;
-    }
-
-    /**
-     * Checks to see if the Graph contains no Vertices.
-     * @return          True if no Vertices exist within the Graph.
-     */
-    public boolean isEmpty () {
-        return hashMap.isEmpty();
-    }
-
-    /**
      * Removes all the Vertices and Edges.
      */
     public void clear () {
@@ -106,30 +87,16 @@ public class Graph implements Iterable<Vertex> {
         totalEdges++;
     }
 
-    public Node[] getVertices () {
-        Node[] nodes = new Node[getTotalVertices()];
-        int i = 0;
-        for (Vertex v : this) {
-            nodes[i++] = v;
-        }
-        return nodes;
-    }
-
     public void updatePheromone(ACO ant) {
-
         double eval = ant.eval();
-
         double probability = (1 - evaporationRate);
-
         Node[] edges = ant.getTour();
-
         HashSet<Edge> hashSet = new HashSet<>();
 
         for (int i = 1; i < edges.length; i++) {
             Edge e1 = getVertex(edges[i-1]).getEdge(edges[i]);
             Edge e2 = getVertex(edges[i]).getEdge(edges[i-1]);
 
-            // The pheromones.
             double p1 = e1.getPheromone();
             double p2 = e2.getPheromone();
 
@@ -140,7 +107,6 @@ public class Graph implements Iterable<Vertex> {
             e2.setPheromone(probability*p2 + 1.0/eval);
         }
 
-        // Evaporate the pheromones on all the rest of the edges.
         for (Vertex v : this) {
             for (Edge e : v) {
                 if (!hashSet.contains(e)) {
@@ -149,7 +115,6 @@ public class Graph implements Iterable<Vertex> {
                 }
             }
         }
-
     }
 
     public static double getDistance (Node node1, Node node2) {
@@ -175,4 +140,3 @@ public class Graph implements Iterable<Vertex> {
         return new String(sb);
     }
 }
-
